@@ -6,6 +6,10 @@ all_from 'lib/Test/Retry.pm';
 tests 't/*.t';
 author_tests 'xt';
 
+requires 'Test::Builder';
+requires 'Time::HiRes';
+requires 'Exporter::Lite';
+
 test_requires 'Test::More';
 
 auto_set_repository;
