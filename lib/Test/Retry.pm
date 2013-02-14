@@ -48,6 +48,27 @@ sub retry_test (&) {
     }
 }
 
+sub override {
+    my $class = shift;
+
+    foreach my $name (@_) {
+        my $pkg = caller;
+
+        my $original_code = $pkg->can($name);
+        my $code = sub (&) {
+            my $block = shift;
+            Test::Retry::retry_test {
+                my @args = $block->();
+                $original_code->(@args);
+            };
+        };
+
+        no strict 'refs';
+        no warnings 'redefine', 'prototype';
+        *{"$pkg\::$name"} = \&$code;
+    }
+}
+
 1;
 
 __END__
