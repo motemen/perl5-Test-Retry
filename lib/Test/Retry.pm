@@ -75,13 +75,28 @@ __END__
 
 =head1 NAME
 
-Test::Retry - 
+Test::Retry - Retry test functions on failure
 
 =head1 SYNOPSIS
 
   use Test::Retry;
 
+  # Retries for 5 times with 0.5 secs delay each
+  retry_test {
+      is func_with_some_random_lag(), $expected;
+  };
+
+  # or override existing test functions
+
+  BEGIN { Test::Retry->override('is') }
+
+  is { func_with_some_random_lag(), $expected };
+
 =head1 DESCRIPTION
+
+Test::Retry provides feature to retry code until a test succeeds (with retry limits).
+
+Useful for tests which involves I/O and requires some wait to pass, for example.
 
 =head1 AUTHOR
 
