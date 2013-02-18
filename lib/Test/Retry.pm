@@ -139,11 +139,69 @@ Test::Retry provides feature to retry code until a test succeeds (with retry lim
 
 Useful for tests which involves I/O and requires some wait to pass, for example.
 
+=head1 IMPORTING
+
+Test::Retry exports one function, namely C<< retry_test >>.
+
+Options below are available when you C<< use >> this module:
+
+=over 4
+
+=item max => $n
+
+The maximum count of retries. Affects the exported C<< retry_test >> function.
+
+Defaults to $Test::Retry::MAX_RETRIES = 5.
+
+=item delay => $floating_secs
+
+The floating seconds after which the next block execution is tried after a failed test.
+Affects the exported C<< retry_test >> function.
+
+Defaults to $Test::Retry::RETRY_DELAY = 0.5.
+
+=item override => \@function_names
+
+Calls C<< override >> (see below) at the timing of C<< import >>.
+
+=back
+
+=head1 FUNCTIONS/METHODS
+
+=over 4
+
+=item retry_test { ... }
+
+Makes the given block of code re-run if a test inside it is going to fail.
+Retry limit and interval are configurable by importing arguments (see above).
+
+If the test continues to fail and retry count hits the limit, the test really fails.
+
+=item Test::Retry->override(@function_names);
+
+Overrides the existing test functions in caller package by retrying version of them.
+
+Should be called in BEGIN block for prototyping issues.
+
+Arguments must be passed by a coderef that returns arguments passed to the test function.
+
+For example,
+
+  like $io->get(), qr/blahblah/, 'blah';
+
+becomes:
+
+  BEGIN { Test::Retry->override('like') }
+  
+  like { $io->get(), qr/blahblah/, 'blah' };
+
+Pretty, heh?
+
+=back
+
 =head1 AUTHOR
 
 motemen E<lt>motemen@gmail.comE<gt>
-
-=head1 SEE ALSO
 
 =head1 LICENSE
 
