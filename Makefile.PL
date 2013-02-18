@@ -8,7 +8,6 @@ author_tests 'xt';
 
 requires 'Test::Builder';
 requires 'Time::HiRes';
-requires 'Exporter::Lite';
 
 test_requires 'Test::More';
 

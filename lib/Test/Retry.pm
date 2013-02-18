@@ -5,22 +5,37 @@ use 5.008_001;
 use Test::Builder;
 use Time::HiRes qw(sleep);
 
-use Exporter::Lite;
-
 our $VERSION = '0.01';
 
-our @EXPORT = qw(retry_test);
+our $MAX_RETRIES = 5;
+our $RETRY_DELAY = 0.5;
 
-our $MAX_RETRIES    = 5;
-our $RETRY_INTERVAL = 0.5;
+sub import {
+    my ($class, %args) = @_;
 
-sub retry_test (&) {
-    my $block = shift;
+    my $pkg = caller;
+    my $retry_test = _mk_retry_test($args{max}, $args{delay});
 
-    my $retry;
-    my $count = 0;
+    {
+        no strict 'refs';
+        *{"$pkg\::retry_test"} = $retry_test;
+    }
+
+    if (my @names = @{ $args{override} || [] }) {
+        $class->override_test_functions(
+            package => $pkg,
+            names => \@names,
+            retry_test => $retry_test,
+        );
+    }
+}
+
+sub retry_test_block {
+    my ($max, $delay, $block) = @_;
 
     my $ORIGINAL_ok = \&Test::Builder::ok;
+
+    my $retry;
 
     no warnings 'redefine';
     local *Test::Builder::ok = sub {
@@ -31,11 +46,11 @@ sub retry_test (&) {
 
         if ($test) {
             goto \&$ORIGINAL_ok; # passes
-        } elsif ($count++ >= $MAX_RETRIES) {
+        } elsif (--$max <= 0) {
             $self->diag("test '$name' failing; give up");
             goto \&$ORIGINAL_ok; # fails
         } else {
-            $self->diag("test '$name' failing; retry ($count/$MAX_RETRIES)");
+            $self->diag("test '$name' failing; retry ($max remaining)");
             $retry++;
         }
     };
@@ -43,29 +58,55 @@ sub retry_test (&) {
     &$block;
 
     while ($retry) {
-        sleep $RETRY_INTERVAL;
+        sleep $delay;
         &$block;
     }
 }
 
+sub _mk_retry_test {
+    my ($max, $delay) = @_;
+
+    return sub (&) {
+        my $block = shift;
+
+        retry_test_block(
+            $max || $MAX_RETRIES,
+            $delay || $RETRY_DELAY,
+            $block,
+        );
+    };
+}
+
 sub override {
-    my $class = shift;
+    my ($class, @names) = @_;
+    my $pkg = caller;
 
-    foreach my $name (@_) {
-        my $pkg = caller;
+    $class->override_test_functions(
+        package => $pkg,
+        names => \@names,
+    );
+}
 
+sub override_test_functions {
+    my ($class, %args) = @_;
+
+    my $pkg = $args{package};
+    my @names = @{ $args{names} };
+    my $retry_test = $args{retry_test} || $pkg->can('retry_test') || _mk_retry_test();
+
+    foreach my $name (@names) {
         my $original_code = $pkg->can($name);
         my $code = sub (&) {
             my $block = shift;
-            Test::Retry::retry_test {
+            $retry_test->(sub {
                 my @args = $block->();
                 $original_code->(@args);
-            };
+            });
         };
 
         no strict 'refs';
         no warnings 'redefine', 'prototype';
-        *{"$pkg\::$name"} = \&$code;
+        *{"$pkg\::$name"} = $code;
     }
 }
 

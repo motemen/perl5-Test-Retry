@@ -1,9 +1,7 @@
 use strict;
 use warnings;
 use Test::More;
-use Test::Retry;
-
-BEGIN { Test::Retry->override('is') }
+use Test::Retry override => [ 'is' ];
 
 my $x = 0;
 
