@@ -35,6 +35,7 @@ my ($passing, $out, $failure_out) = do {
 };
 
 ok !$passing, 'expectedly fails';
+$out =~ s/^\s*#.*\n//g;
 is $out, <<'TAP';
     not ok 1 - a eq b
     not ok 2 - $y++ == 3
