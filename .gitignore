@@ -17,3 +17,11 @@ local/
 .prove
 Debian_CPANTS.txt
 .DS_Store
+/Test-Retry-*
+/.build
+/_build_params
+/Build
+/Build.bat
+!Build/
+!META.json
+!LICENSE
