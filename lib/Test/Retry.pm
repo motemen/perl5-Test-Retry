@@ -22,7 +22,7 @@ sub import {
     }
 
     if (my @names = @{ $args{override} || [] }) {
-        $class->override_test_functions(
+        $class->_override_test_functions(
             package => $pkg,
             names => \@names,
             retry_test => $retry_test,
@@ -30,7 +30,7 @@ sub import {
     }
 }
 
-sub retry_test_block {
+sub _retry_test_block {
     my ($max, $delay, $block) = @_;
 
     my $ORIGINAL_ok = \&Test::Builder::ok;
@@ -69,7 +69,7 @@ sub _mk_retry_test {
     return sub (&) {
         my $block = shift;
 
-        retry_test_block(
+        _retry_test_block(
             $max || $MAX_RETRIES,
             $delay || $RETRY_DELAY,
             $block,
@@ -81,13 +81,13 @@ sub override {
     my ($class, @names) = @_;
     my $pkg = caller;
 
-    $class->override_test_functions(
+    $class->_override_test_functions(
         package => $pkg,
         names => \@names,
     );
 }
 
-sub override_test_functions {
+sub _override_test_functions {
     my ($class, %args) = @_;
 
     my $pkg = $args{package};
