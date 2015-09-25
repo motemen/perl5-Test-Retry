@@ -2,5 +2,5 @@ Revision history for Perl extension Test::Retry
 
 {{$NEXT}}
 
-0.01    Thu Feb 14 15:45:28 2013
-        - original version
+0.01 2015-09-25T01:27:43Z
+    - Initial release

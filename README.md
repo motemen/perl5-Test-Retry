@@ -71,7 +71,6 @@ Options below are available when you `use` this module:
 
         BEGIN { Test::Retry->override('like') }
         
-
         like { $io->get(), qr/blahblah/, 'blah' };
 
     Pretty, heh?
